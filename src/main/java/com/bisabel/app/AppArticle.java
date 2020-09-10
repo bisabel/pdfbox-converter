@@ -36,10 +36,10 @@ class CustomPDFTextStripper extends PDFTextStripperByArea{
 
       for (TextPosition position : textPositions)
       {
-          String baseFont = position.getFont().getName() +  " ("+position.getFontSize()+")";
+          String baseFont = position.getFont().getName() +  " | "	+position.getFont().getSubType() +" ("+position.getFontSizeInPt()+")";
           if (baseFont != null && !baseFont.equals(prevBaseFont))
           {
-              builder.append('[').append(baseFont).append(']');
+              //builder.append('[').append(baseFont).append(']');
               prevBaseFont = baseFont;
           }
           builder.append(position.getUnicode());
@@ -62,7 +62,9 @@ public class AppArticle
     public static String fetchTextByRegion(PDDocument document, int pageNumber) throws IOException {
           //Rectangle2D region = new Rectangle2D.Double(x,y,width,height);
           //Rectangle2D region = new Rectangle2D.Double(80, 90, 690, 948);
-          Rectangle2D region = new Rectangle2D.Double(70, 80, 700, 675);
+          //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);//FUNdamentals of climbing: movement.pdf
+          //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);
+          Rectangle2D region = new Rectangle2D.Double(0, 0, 550, 650);//speed climbing
           String regionName = "region";
           PDFTextStripperByArea stripper;
           PDPage page = document.getPage(pageNumber);
@@ -71,13 +73,27 @@ public class AppArticle
           stripper.addRegion(regionName, region);
           stripper.extractRegions(page);
           String text = stripper.getTextForRegion(regionName);
-          return text;
+          return cleanText(text);
+    }
+
+    public static String cleanText(String text){
+      //some become from previous replace
+      text = text.replaceAll("  ", " ");
+      text = text.replaceAll("\n\\s\n", "\n");
+
+      //remove new line that split sentence
+      text = text.replaceAll("([a-zA-Z]+[,\"’);]*)\\s?\n([a-zA-Z])", "$1 $2");
+      text = text.replaceAll("([a-z])\\-\\s?\n([a-z])", "$1$2");
+      text = text.replaceAll("([0-9])\\-\\s?\n([a-z])", "$1$2");
+      text = text.replaceAll("([a-z])\\s\n([a-z])", "$1 $2");
+      text = text.replaceAll("([a-z])\n([a-z])", "$1 $2");
+      return text;
     }
 
     public static void main( String[] args )  throws PrinterException
     {
-        if (args.length != 1) {
-     	    System.err.println("specify a file url as argument");
+        if (args.length != 2) {
+     	    System.err.println("specify a url and a output file as argument");
      	    System.exit(1);
    	    }
 
@@ -86,16 +102,16 @@ public class AppArticle
           System.out.println( "Hello World!!!" );
           CustomPDFTextStripper pdfStripper = new CustomPDFTextStripper();
 
-          int FIRSTPAGE = 3;
+          int FIRSTPAGE = 13;
           int LASTPAGE = pddocument.getNumberOfPages();
 
-          System.out.println(
+          //System.out.println(
             //fetchTextByRegion(pddocument, pddocument.getNumberOfPages()-1)
             //fetchTextByRegion(pddocument, 49)
-          );
+          //);
 
           try (PrintWriter out =
-               new PrintWriter("/home/borja/Proyectos/MScBigData/dissertation/resource/doc_sources/output_from_pdf.txt") )
+               new PrintWriter(args[1]) )
           {
             for (int npage = FIRSTPAGE; npage < LASTPAGE; npage++) {
               out.println(fetchTextByRegion(pddocument, npage));
@@ -107,29 +123,29 @@ public class AppArticle
           //System.out.println(text);
 
           //Closing the PDFdocument
-          pddocument.close();
+          //pddocument.close();
 
 
           //PDDocument doc = PDDocument.load(out);
-          //PDFTextStripper textStripper = new PDFTextStripper();
-          //StringWriter textWriter = new StringWriter();
-          //pdfStripper.writeText(pddocument, textWriter);
+          PDFTextStripper textStripper = new PDFTextStripper();
+          StringWriter textWriter = new StringWriter();
+          pdfStripper.writeText(pddocument, textWriter);
           //set the start-end page
-          /*
-          pdfStripper.setStartPage(106);
-          pdfStripper.setEndPage(106);
+
+          pdfStripper.setStartPage(14);
+          pdfStripper.setEndPage(14);
 
           System.out.println(pdfStripper.getText(pddocument));
           pddocument.close();
 
           //Retrieving text from PDF document
           List<List<TextPosition>>	list = pdfStripper.getCharactersByArticle();
-          System.out.println("list l: "+list.size()+ " - " + pdfStripper.getCurrentPageNo());
-          System.out.println("start: " + pdfStripper.getArticleStart());
+          //System.out.println("list l: "+list.size()+ " - " + pdfStripper.getCurrentPageNo());
+          //System.out.println("start: " + pdfStripper.getArticleStart());
           System.out.println("first getPageWidth: "+list.get(0).get(0).getPageWidth());
           System.out.println("first getPageHeight: "+list.get(0).get(0).getPageHeight());
 
-
+          /*
           for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i).size());
             for (int j = 0; j < list.get(i).size(); j++){
