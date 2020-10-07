@@ -53,27 +53,32 @@ class CustomPDFTextStripper extends PDFTextStripperByArea{
 
 
 /**
- * Hello world!
+ * Read a PDF File and extract the text into a txt file.
  *
  */
 public class AppArticle
 {
 
+    /*
+    * Extract the text of a given PDF page.
+    * Needs to specify a rectangle area on the page to avoid marginsd, footer, heading...
+    * Every PDF needs different rectangle definition
+    */
     public static String fetchTextByRegion(PDDocument document, int pageNumber) throws IOException {
-          //Rectangle2D region = new Rectangle2D.Double(x,y,width,height);
-          //Rectangle2D region = new Rectangle2D.Double(80, 90, 690, 948);
-          //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);//FUNdamentals of climbing: movement.pdf
-          //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);
-          Rectangle2D region = new Rectangle2D.Double(0, 0, 550, 650);//speed climbing
-          String regionName = "region";
-          PDFTextStripperByArea stripper;
-          PDPage page = document.getPage(pageNumber);
-          stripper = new CustomPDFTextStripper();
+      //Rectangle2D region = new Rectangle2D.Double(x,y,width,height);
+      //Rectangle2D region = new Rectangle2D.Double(80, 90, 690, 948);
+      //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);
+      //Rectangle2D region = new Rectangle2D.Double(0, 40, 600, 570);
+      Rectangle2D region = new Rectangle2D.Double(0, 0, 550, 650);
+      String regionName = "region";
+      PDFTextStripperByArea stripper;
+      PDPage page = document.getPage(pageNumber);
+      stripper = new CustomPDFTextStripper();
 
-          stripper.addRegion(regionName, region);
-          stripper.extractRegions(page);
-          String text = stripper.getTextForRegion(regionName);
-          return cleanText(text);
+      stripper.addRegion(regionName, region);
+      stripper.extractRegions(page);
+      String text = stripper.getTextForRegion(regionName);
+      return cleanText(text);
     }
 
     public static String cleanText(String text){
@@ -93,22 +98,19 @@ public class AppArticle
     public static void main( String[] args )  throws PrinterException
     {
         if (args.length != 2) {
-     	    System.err.println("specify a url and a output file as argument");
+     	    System.err.println("specify PDF File path and a File for a output as arguments");
      	    System.exit(1);
    	    }
 
         String filename = args[0];
         try (PDDocument pddocument = PDDocument.load(new File(filename)) ) {
-          System.out.println( "Hello World!!!" );
+          System.out.println("PDF Loaded");
           CustomPDFTextStripper pdfStripper = new CustomPDFTextStripper();
 
-          int FIRSTPAGE = 13;
+          //change this valuees to extract a specific range of pages of the PDF
+          //for default,it will extracted all pages.
+          int FIRSTPAGE = 1;
           int LASTPAGE = pddocument.getNumberOfPages();
-
-          //System.out.println(
-            //fetchTextByRegion(pddocument, pddocument.getNumberOfPages()-1)
-            //fetchTextByRegion(pddocument, 49)
-          //);
 
           try (PrintWriter out =
                new PrintWriter(args[1]) )
@@ -120,13 +122,7 @@ public class AppArticle
           } catch (java.io.FileNotFoundException fnf){
             System.out.println( "ERROR "+fnf );
           }
-          //System.out.println(text);
 
-          //Closing the PDFdocument
-          //pddocument.close();
-
-
-          //PDDocument doc = PDDocument.load(out);
           PDFTextStripper textStripper = new PDFTextStripper();
           StringWriter textWriter = new StringWriter();
           pdfStripper.writeText(pddocument, textWriter);
@@ -140,76 +136,9 @@ public class AppArticle
 
           //Retrieving text from PDF document
           List<List<TextPosition>>	list = pdfStripper.getCharactersByArticle();
-          //System.out.println("list l: "+list.size()+ " - " + pdfStripper.getCurrentPageNo());
-          //System.out.println("start: " + pdfStripper.getArticleStart());
           System.out.println("first getPageWidth: "+list.get(0).get(0).getPageWidth());
           System.out.println("first getPageHeight: "+list.get(0).get(0).getPageHeight());
 
-          /*
-          for (int i = 0; i < list.size(); i++) {
-            System.out.println(list.get(i).size());
-            for (int j = 0; j < list.get(i).size(); j++){
-              //System.out.print(list.get(i).get(j).size());
-              //System.out.print(list.get(i).get(j).getUnicode());
-            }
-            System.out.println();
-
-            //System.out.println(list.get(i));
-          }
-          */
-
-          /*
-          //String text = pdfStripper.getText(document);
-          //doble o triple new lines
-          //some become from previous replace
-          text = text.replaceAll("  ", " ");
-          text = text.replaceAll("\n\\s?\n", "\n");
-
-
-          //remove specific footer/header books
-          text = text.replaceAll("T R A I N I N G T I P S F O R R O C K C L I M B E R S ","");
-          text = text.replaceAll("R O P E S - A G U I D E F O R C L I M B E R S A N D M O U N T A I N E E R S","");
-          text = text.replaceAll("[0-9]{1,2} Climbing Outside","");
-          //specific from file speed climbing!
-          text = text.replaceAll("([a-z][0-9])\\s\n([a-z])", "$1 $2");
-
-          //doesnt work
-          text = text.replaceAll("Figure\\s*[0-9]+\\s*\n","\n");
-          text = text.replaceAll("\n\\s?[0-9]+\\s?\n","\n");
-
-          //doble o triple new lines
-          //some become from previous replace
-          text = text.replaceAll("  ", " ");
-          text = text.replaceAll("\n\\s\n", "\n");
-
-          //remove new line that split sentence
-          text = text.replaceAll("([a-zA-Z]+[,\"’);]*)\\s?\n([a-zA-Z])", "$1 $2");
-          text = text.replaceAll("([a-z])\\-\\s?\n([a-z])", "$1$2");
-          text = text.replaceAll("([0-9])\\-\\s?\n([a-z])", "$1$2");
-          text = text.replaceAll("([a-z])\\s\n([a-z])", "$1 $2");
-          text = text.replaceAll("([a-z])\n([a-z])", "$1 $2");
-          //not sure about this
-          text = text.replaceAll("(\\s[0-9])\\s\n([a-z])", "$1 $2");
-          text = text.replaceAll("([a-z])\\s\n([0-9])", "$1 $2");
-          //BMC case new lines split with simbol – or ()
-          text = text.replaceAll("([a-z])\\s–\\s\n([a-zA-Z])", "$1 $2");
-          text = text.replaceAll("([a-z])\\s?\n([,\"’‘)(]*[a-zA-Z])", "$1 $2");
-          text = text.replaceAll("([a-z])\\s(–)\n([a-z])", "$1 $2 $3");
-
-
-          try (PrintWriter out =
-               new PrintWriter("/home/borja/Proyectos/MScBigData/dissertation/resource/doc_sources/output_from_pdf.txt") )
-          {
-            out.println(text);
-            out.close();
-          } catch (java.io.FileNotFoundException fnf){
-            System.out.println( "ERROR "+fnf );
-          }
-          //System.out.println(text);
-
-          //Closing the document
-          document.close();
-          */
         } catch (IOException ioe){
           System.out.println( "ERROR "+ioe );
         }
